@@ -516,6 +516,8 @@ impl<H> Connection<H>
                             try!(response.format(res.get_mut()));
                             self.events.remove(Ready::readable());
                             self.events.insert(Ready::writable());
+                        } else {
+                            return Err(Error::new(Kind::Internal, ""))
                         }
                     }
                     return Ok(())
@@ -595,7 +597,11 @@ impl<H> Connection<H>
         } else {
             let res = if self.state.is_connecting() {
                 trace!("Ready to read handshake from {}.", self.peer_addr());
-                self.read_handshake()
+                if let Err(_) = self.read_handshake() {
+                    self.disconnect()
+                }
+
+                Ok(())
             } else {
                 trace!("Ready to read messages from {}.", self.peer_addr());
                 while let Some(len) = try!(self.buffer_in()) {
@@ -963,7 +969,8 @@ impl<H> Connection<H>
             // We are initiating a closing handshake.
             Open => self.state = AwaitingClose,
             Connecting(_, _) => {
-                debug_assert!(false, "Attempted to close connection while not yet open.")
+                warn!("Attempted to close connection while not yet open. Stream will be disconnected");
+                return Err(Error::new(Kind::Custom(Box::new(::std::sync::mpsc::TryRecvError::Disconnected)), "Disconnected because of illegal operation on ws"));
             }
         }
 
