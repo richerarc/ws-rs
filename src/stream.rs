@@ -3,9 +3,10 @@ use std::io::ErrorKind::WouldBlock;
 #[cfg(any(feature = "ssl", feature = "nativetls"))]
 use std::mem::replace;
 use std::net::SocketAddr;
-
 use bytes::{Buf, BufMut};
 use mio::tcp::TcpStream;
+#[cfg(feature = "ssl")]
+use openssl::ssl::{HandshakeError, MidHandshakeSslStream, SslStream};
 #[cfg(feature = "ssl")]
 use openssl::ssl::Error as SslError;
 #[cfg(feature = "nativetls")]
