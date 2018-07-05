@@ -1133,7 +1133,7 @@ where
             Open => self.state = AwaitingClose,
             Connecting(_, _) => {
                 warn!("Attempted to close connection while not yet open. Stream will be disconnected");
-                self.disconnect();
+                return Err(Error::new(Kind::Custom(Box::new(::std::sync::mpsc::TryRecvError::Disconnected)), "Disconnected because of illegal operation on ws"));
             }
         }
 
