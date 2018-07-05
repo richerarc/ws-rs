@@ -585,6 +585,8 @@ where
                             response.format(res.get_mut())?;
                             self.events.remove(Ready::readable());
                             self.events.insert(Ready::writable());
+                        } else {
+                            return Err(Error::new(Kind::Internal, ""))
                         }
                     }
                     return Ok(());
@@ -684,7 +686,11 @@ where
         } else {
             let res = if self.state.is_connecting() {
                 trace!("Ready to read handshake from {}.", self.peer_addr());
-                self.read_handshake()
+                if let Err(_) = self.read_handshake() {
+                    self.disconnect()
+                }
+
+                Ok(())
             } else {
                 trace!("Ready to read messages from {}.", self.peer_addr());
                 while let Some(len) = self.buffer_in()? {
@@ -1126,7 +1132,8 @@ where
             // We are initiating a closing handshake.
             Open => self.state = AwaitingClose,
             Connecting(_, _) => {
-                debug_assert!(false, "Attempted to close connection while not yet open.")
+                warn!(false, "Attempted to close connection while not yet open. Stream will be disconnected");
+                self.disconnect();
             }
         }
 
