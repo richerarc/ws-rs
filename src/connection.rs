@@ -1132,7 +1132,7 @@ where
             // We are initiating a closing handshake.
             Open => self.state = AwaitingClose,
             Connecting(_, _) => {
-                warn!(false, "Attempted to close connection while not yet open. Stream will be disconnected");
+                warn!("Attempted to close connection while not yet open. Stream will be disconnected");
                 self.disconnect();
             }
         }
